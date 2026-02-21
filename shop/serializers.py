@@ -156,3 +156,7 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ["id", "status", "contact", "created_at", "updated_at", "items", "total_amount"]
 
 
+class PartnerStateSerializer(serializers.Serializer):
+    is_active = serializers.BooleanField()
+
+

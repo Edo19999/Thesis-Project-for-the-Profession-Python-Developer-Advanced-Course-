@@ -28,7 +28,7 @@ python -m venv venv
 venv\Scripts\activate  # Windows
 
 pip install --upgrade pip
-pip install django==5.2.11 djangorestframework==3.15.2 djangorestframework-authtoken celery==5.4.0 redis==5.0.7 pyyaml==6.0.2
+pip install django==5.2.11 djangorestframework==3.15.2 djangorestframework-authtoken celery==5.4.0 redis==5.0.7 pyyaml==6.0.2 drf-spectacular==0.29.0
 
 python manage.py migrate
 python manage.py createsuperuser  # при необходимости
@@ -43,6 +43,8 @@ http://127.0.0.1:8000/
 
 - `/api/` — основной API
 - `/api-auth/login/` — форма логина (session auth)
+- `/api/schema/` — OpenAPI‑схема (DRF Spectacular)
+- `/api/docs/` — Swagger UI по схеме
 
 Почта в режиме разработки выводится в консоль (EMAIL_BACKEND = console).
 
@@ -268,4 +270,3 @@ celery -A config worker -l info
 - **Этап 7**: Celery‑приложение с задачами `send_email_task` и `do_import`, плюс вид для запуска `do_import` из админки —
   реализовано.
 - **Этап 8**: docker-compose для web, db, redis и celery — реализован.
-

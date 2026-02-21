@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . /app
 
 RUN pip install --upgrade pip && \
-    pip install django==5.2.11 djangorestframework==3.15.2 djangorestframework-simplejwt celery==5.4.0 redis==5.0.7 psycopg2-binary==2.9.10 pyyaml==6.0.2 gunicorn==23.0.0
+    pip install django==5.2.11 djangorestframework==3.15.2 djangorestframework-simplejwt celery==5.4.0 redis==5.0.7 psycopg2-binary==2.9.10 pyyaml==6.0.2 drf-spectacular==0.29.0 gunicorn==23.0.0
 
 EXPOSE 8000
 

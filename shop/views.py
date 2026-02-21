@@ -1,7 +1,6 @@
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.conf import settings
-from django.core.mail import send_mail
 from rest_framework import generics, status, serializers
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
@@ -27,7 +26,9 @@ from .serializers import (
     ContactSerializer,
     BasketItemSerializer,
     OrderSerializer,
+    PartnerStateSerializer,
 )
+from .tasks import send_email_task
 
 
 class ProductListView(generics.ListAPIView):
@@ -146,12 +147,10 @@ class UserRegisterView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = serializer.save()
-        send_mail(
+        send_email_task.delay(
             "Регистрация в сервисе заказов",
             "Вы успешно зарегистрировались в сервисе заказов.",
-            settings.DEFAULT_FROM_EMAIL,
             [user.email],
-            fail_silently=True,
         )
 
 
@@ -288,20 +287,16 @@ class OrderListCreateView(generics.ListCreateAPIView):
 
         total = order.total_amount
 
-        send_mail(
+        send_email_task.delay(
             f"Заказ #{order.id} принят",
             f"Ваш заказ #{order.id} успешно оформлен. Сумма: {total}.",
-            settings.DEFAULT_FROM_EMAIL,
             [order.user.email],
-            fail_silently=True,
         )
 
-        send_mail(
+        send_email_task.delay(
             f"Новый заказ #{order.id}",
             f"Поступил новый заказ #{order.id} от пользователя {order.user.username}. Сумма: {total}.",
-            settings.DEFAULT_FROM_EMAIL,
             [settings.ADMIN_EMAIL],
-            fail_silently=True,
         )
 
 
@@ -322,12 +317,10 @@ class OrderDetailView(generics.RetrieveUpdateAPIView):
 
         if order.status != old_status:
             total = order.total_amount
-            send_mail(
+            send_email_task.delay(
                 f"Статус заказа #{order.id} изменён",
                 f"Статус вашего заказа #{order.id} изменён на '{order.get_status_display()}'. Сумма: {total}.",
-                settings.DEFAULT_FROM_EMAIL,
                 [order.user.email],
-                fail_silently=True,
             )
 
 
@@ -360,14 +353,10 @@ class PartnerStateView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        is_active = request.data.get("is_active")
-        if is_active is None:
-            return Response(
-                {"detail": "Нужно передать поле is_active"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer = PartnerStateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        shop.is_active = bool(is_active)
+        shop.is_active = serializer.validated_data["is_active"]
         shop.save(update_fields=["is_active"])
 
         return Response(
